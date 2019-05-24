@@ -17,10 +17,10 @@ enum{
 typedef struct {
   int ty;
   int val;
-  char *input;
+  char* input;
 } Token
 
-char *user_input;
+char* user_input;
 
 //トークナイズした結果のトークン列はこの配列に保存する
 //100個以上のトークンは来ないものとする。
