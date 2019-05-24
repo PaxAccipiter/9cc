@@ -51,7 +51,7 @@ void error_at(char *loc, char *msg)
 //user_inputが指している文字列を
 //トークンに分割してtokensに保存する
 void tokenize(){
-  char *p = user_input;
+  char* p = user_input;
 
   int i = 0;
   while (*p) {
