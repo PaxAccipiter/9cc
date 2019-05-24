@@ -18,7 +18,7 @@ typedef struct {
   int ty;
   int val;
   char* input;
-} Token
+} Token;
 
 char* user_input;
 
