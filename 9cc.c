@@ -80,7 +80,7 @@ void tokenize(){
     error_at(p,"トークナイズできません。");
   }
 
-  tokens[i].ty = TKEOF;
+  tokens[i].ty = TK_EOF;
   tokens[i].input = p;
   
 }
