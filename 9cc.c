@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
   //最初のmov命令
   if(tokens[0].ty != TK_NUM)
     error_at(tokens[0].input,"数ではありません");
-  printf("  mov rax, %ld\n",tokens[0].val);
+  printf("  mov rax, %d\n",tokens[0].val);
 
   // '+<数>'あるいは'-<数>'というトークンの並びを消費しつつ
   //アセンブリを出力
@@ -114,14 +114,14 @@ int main(int argc, char **argv) {
       i++;
       if(tokens[i].ty != TK_NUM)
 	error_at(tokens[i].input, "数ではありません");
-      printf("  add rax, %ld\n",tokens[i].val);
+      printf("  add rax, %d\n",tokens[i].val);
       i++;
     }
     else if (tokens[i].ty == '-'){
       i++;
       if(tokens[i].ty != TK_NUM)
 	error_at(tokens[i].input,"数ではありません");
-      printf("  sub rax, %ld\n",tokens[i].val);
+      printf("  sub rax, %d\n",tokens[i].val);
       i++;
     }
     else{
