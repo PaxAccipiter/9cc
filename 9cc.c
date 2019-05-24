@@ -72,7 +72,7 @@ void tokenize(){
     if (isdigit(*p)){
       tokens[i].ty = TK_NUM;
       tokens[i].input = p;
-      tokens[i].val = strtol(p,&p,10);
+      tokens[i].val = strtol(p,&p,10);//別にここでpは次のトークンか空白に移動しているからp++はいらない。
       i++;
       continue;
     }
@@ -82,7 +82,6 @@ void tokenize(){
 
   tokens[i].ty = TK_EOF;
   tokens[i].input = p;
-  
 }
   
 int main(int argc, char **argv) {
