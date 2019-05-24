@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
 
   int i = 1;
   while(tokens[i].ty != TK_EOF){
-    if (tokens[i].ty != '+'){
+    if (tokens[i].ty == '+'){
       i++;
       if(tokens[i].ty != TK_NUM)
 	error_at(tokens[i].input, "数ではありません");
