@@ -20,7 +20,14 @@ typedef struct {
   char* input;
 } Token;
 
-char* user_input;
+typedef struct Node {
+  int ty ; //演算子かND_NUM
+  struct Node *lhs;
+  struct Node *rhs;
+  int val; //tyがND_NUMの場合のみ使われる
+} Node;
+  
+char* user_input;//ユーザからの入力
 
 //トークナイズした結果のトークン列はこの配列に保存する
 //100個以上のトークンは来ないものとする。
