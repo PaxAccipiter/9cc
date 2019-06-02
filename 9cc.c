@@ -121,14 +121,14 @@ Node* new_node(int ty, Node* lhs, Node *rhs){
 }
 
 Node* new_node_num(int val){
-  Node* node = mallloc(sizeof(Node));
+  Node* node = (Node*)malloc(sizeof(Node));
   node->ty = ND_NUM;
   node->val = val;
   return node;
 }
 
 int consume(int ty){
-  if(token[pos].ty != ty) return 0;
+  if(tokens[pos].ty != ty) return 0;
   pos++;
   return 1;
 }
@@ -137,7 +137,7 @@ Node* term(){
   if(consume('(')){
     Node* node = expr();
     if(!consume(')')){
-      error_at(tokens[pos].input,"開き括弧に対する閉じ括弧がありません。")
+      error_at(tokens[pos].input,"開き括弧に対する閉じ括弧がありません。");
     }
     return node;
   }
@@ -186,7 +186,7 @@ void gen(Node* node){
       break;
     case '-':
       printf("  sub rax, rdi\n");
-      break:
+      break;
     case '*':
       printf("  imul rdi\n");//imulはraxとrdiの席をrdxとraxに入れる.
       break;
