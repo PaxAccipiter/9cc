@@ -17,21 +17,14 @@ enum{
 typedef struct {
   int ty;
   int val;
-  char* input;
+  char* input;//いるのか??
 } Token;
-
-typedef struct Node {
-  int ty ; //演算子かND_NUM
-  struct Node *lhs;
-  struct Node *rhs;
-  int val; //tyがND_NUMの場合のみ使われる
-} Node;
-  
-char* user_input;//ユーザからの入力
 
 //トークナイズした結果のトークン列はこの配列に保存する
 //100個以上のトークンは来ないものとする。
 Token tokens[100];
+//トークン列のどこをみているのか
+int pos = 0;
 
 //エラーを報告するための関数
 //printfと同じ引数を取る
@@ -57,9 +50,7 @@ void error_at(char *loc, char *msg)
 
 //user_inputが指している文字列を
 //トークンに分割してtokensに保存する
-void tokenize(){
-  char* p = user_input;
-
+void tokenize(char* p){
   int i = 0;
   while (*p) {
     //空白文字をスキップ
@@ -90,7 +81,104 @@ void tokenize(){
   tokens[i].ty = TK_EOF;
   tokens[i].input = p;
 }
-  
+
+//ノードの型を表す値
+enum{
+  ND_NUM, //整数ノード
+};
+
+typedef struct Node {
+  int ty ; //演算子かND_NUM
+  struct Node *lhs; //left hand side 左辺
+  struct Node *rhs; //right hand side 右辺
+  int val; //tyがND_NUMの場合のみ使われる
+} Node;
+
+Node* new_node(int ty, Node* lhs, Node *rhs){
+  Node *node = malloc(sizeof(Node));
+  node->ty = ty;
+  node->lhs = lhs;
+  node->rhs = rhs;
+  return node;
+}
+
+Node* new_node_num(nt val){
+  Node* node = mallloc(sizeof(Node));
+  node->ty = ND_NUM;
+  node->val = val;
+  return node;
+}
+
+int consume(int ty){
+  if(token[pos].ty != ty) return 0;
+  pos++;
+  return 1;
+}
+
+Node* term(){
+  if(consume('(')){
+    Node* node = expr();
+    if(!consume(')')){
+      error_at(tokens[pos].input,'開き括弧に対する閉じ括弧がありません。')
+    }
+    return node;
+  }
+
+  //そうでないなら数値のはず
+  if(tokens[pos].ty == TK_NUM) return new_node_num(tokens[pos++].val);
+
+  error_at(tokens[pos].input, "数値でも開き括弧でもないトークンです。");
+}
+
+Node* mul(){
+  Node* node = term();//int* a int *a はどちらも同じもの。int *aだと、aのdereferenceがint型のように見えて分かりやすそう?
+
+  for(;;){
+    if(consume('*')) node = new_node('*',node,term());
+    else if(consume('/')) node = new_node('/',node,term());
+    else return node;
+  }
+}
+Node expr(){
+  Node *node = mul();//一つ目の文字
+
+  for(;;){
+    if(consume('+')) node = new_node('+',node,mul());
+    else if(consume('-')) node = new_node('-',node,mul());
+    else return node;
+  }
+}
+
+//ASTをアセンブリにしましょう
+void gen(Node* node){
+  if(node->ty == ND_NUM){
+    printf("  push %d\n",node->val);
+    return;
+  }
+
+  gen(node->lhs);
+  gen(node->rhs);
+
+  printf("pop rdi\n");
+  printf("pop rax\n");
+
+  switch(node->ty){
+    case '+':
+      printf("  add rax, rdi\n");
+      break;
+    case '-':
+      printf("  sub rax, rdi\n");
+      break:
+    case '*':
+      printf("  imul rdi\n");//imulはraxとrdiの席をrdxとraxに入れる.
+      break;
+    case '/':
+      printf("  cqo\n");//これはraxを拡張してくれるもの.
+      printf("  idiv rdi\n");//idivはrdxとraxの128bitをrdiで割って結果をraxにセットする。
+  }
+
+  printf("  push rax\n");
+}
 int main(int argc, char **argv) {
   if (argc != 2) {
     fprintf(stderr, "引数の個数が正しくありません\n");
@@ -98,43 +186,18 @@ int main(int argc, char **argv) {
   }
 
   //トークナイズする
-  user_input = argv[1];
-  tokenize();
+  tokenize(argv[1]);
+  Node* node = expr();
 
   //アセンブリの前半部分を出力
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
   printf("main:\n");
-  //式の最初が数でないといけないので検査
-  //最初のmov命令
-  if(tokens[0].ty != TK_NUM)
-    error_at(tokens[0].input,"数ではありません");
-  printf("  mov rax, %d\n",tokens[0].val);
 
-  // '+<数>'あるいは'-<数>'というトークンの並びを消費しつつ
-  //アセンブリを出力
+  //ASTを走査してアセンブリを出力
+  gen(node);
 
-  int i = 1;
-  while(tokens[i].ty != TK_EOF){
-    if (tokens[i].ty == '+'){
-      i++;
-      if(tokens[i].ty != TK_NUM)
-	error_at(tokens[i].input, "数ではありません");
-      printf("  add rax, %d\n",tokens[i].val);
-      i++;
-    }
-    else if (tokens[i].ty == '-'){
-      i++;
-      if(tokens[i].ty != TK_NUM)
-	error_at(tokens[i].input,"数ではありません");
-      printf("  sub rax, %d\n",tokens[i].val);
-      i++;
-    }
-    else{
-      error_at(tokens[i].input,"予期しないトークンです");
-  }
-  }
-  
+  printf("  pop rax\n");
   printf("  ret\n");
   return 0;
 }
