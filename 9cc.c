@@ -4,14 +4,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//globals
+//入力列
+char* user_input;
+
+//トークナイズした結果のトークン列はこの配列に保存する
+//100個以上のトークンは来ないものとする。
+Token tokens[100];
+//トークン列のどこをみているのか
+int pos = 0;
+
+//defines
 //トークンの型を表す値
 enum{
   TK_NUM = 256, //整数トークン
   TK_EOF,       //入力の終わりを表すトークン
 };
-
-//入力列
-char* user_input;
 
 //トークンの型
 //type
@@ -23,11 +31,29 @@ typedef struct {
   char* input;//いるのか??
 } Token;
 
-//トークナイズした結果のトークン列はこの配列に保存する
-//100個以上のトークンは来ないものとする。
-Token tokens[100];
-//トークン列のどこをみているのか
-int pos = 0;
+//ノードの型を表す値
+enum{
+  ND_NUM, //整数ノード
+};
+
+typedef struct Node {
+  int ty ; //演算子かND_NUM
+  struct Node *lhs; //left hand side 左辺
+  struct Node *rhs; //right hand side 右辺
+  int val; //tyがND_NUMの場合のみ使われる
+} Node;
+
+//functions
+void error(char *fmt, ...);
+void error_at(char *loc, char *msg);
+void tokenize();
+Node* new_node(int ty, Node* lhs, Node *rhs);
+Node* new_node_num(int val);
+int consume(int ty);
+Node* term();
+Node* mul();
+Node* expr();
+void gen(Node* node);
 
 //エラーを報告するための関数
 //printfと同じ引数を取る
@@ -42,8 +68,7 @@ void error(char *fmt, ...) {
 
 //エラー個所を報告する関数。
 //locってなんやろ
-void error_at(char *loc, char *msg)
-{
+void error_at(char *loc, char *msg){
   int pos = loc - user_input;
   fprintf(stderr, "%s\n", user_input);
   fprintf(stderr, "%*s", pos, " ");//pos個数の空白を出力
@@ -86,17 +111,6 @@ void tokenize(){
   tokens[i].input = p;
 }
 
-//ノードの型を表す値
-enum{
-  ND_NUM, //整数ノード
-};
-
-typedef struct Node {
-  int ty ; //演算子かND_NUM
-  struct Node *lhs; //left hand side 左辺
-  struct Node *rhs; //right hand side 右辺
-  int val; //tyがND_NUMの場合のみ使われる
-} Node;
 
 Node* new_node(int ty, Node* lhs, Node *rhs){
   Node *node = malloc(sizeof(Node));
@@ -106,7 +120,7 @@ Node* new_node(int ty, Node* lhs, Node *rhs){
   return node;
 }
 
-Node* new_node_num(nt val){
+Node* new_node_num(int val){
   Node* node = mallloc(sizeof(Node));
   node->ty = ND_NUM;
   node->val = val;
@@ -123,7 +137,7 @@ Node* term(){
   if(consume('(')){
     Node* node = expr();
     if(!consume(')')){
-      error_at(tokens[pos].input,'開き括弧に対する閉じ括弧がありません。')
+      error_at(tokens[pos].input,"開き括弧に対する閉じ括弧がありません。")
     }
     return node;
   }
@@ -143,7 +157,7 @@ Node* mul(){
     else return node;
   }
 }
-Node expr(){
+Node* expr(){
   Node *node = mul();//一つ目の文字
 
   for(;;){
