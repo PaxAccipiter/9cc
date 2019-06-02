@@ -10,6 +10,9 @@ enum{
   TK_EOF,       //入力の終わりを表すトークン
 };
 
+//入力列
+char* user_input;
+
 //トークンの型
 //type
 //value(tyがTK_NUMの場合、その数値)
@@ -50,7 +53,8 @@ void error_at(char *loc, char *msg)
 
 //user_inputが指している文字列を
 //トークンに分割してtokensに保存する
-void tokenize(char* p){
+void tokenize(){
+  char* p = user_input;
   int i = 0;
   while (*p) {
     //空白文字をスキップ
@@ -184,6 +188,8 @@ int main(int argc, char **argv) {
     fprintf(stderr, "引数の個数が正しくありません\n");
     return 1;
   }
+
+  user_input = argv[1];
 
   //トークナイズする
   tokenize(argv[1]);
