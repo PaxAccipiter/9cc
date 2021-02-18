@@ -4,5 +4,5 @@
 https://www.sigbus.info/compilerbook
 
 ##現在の進捗
-
+簡単な足し算を実装した。
 ##私のqiita
