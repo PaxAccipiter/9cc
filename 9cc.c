@@ -10,10 +10,11 @@ char* user_input;
 
 //defines
 //トークンの型を表す値
-enum{
-  TK_NUM = 256, //整数トークン
-  TK_EOF,       //入力の終わりを表すトークン
-};
+typedef enum {
+    TK_RESERVED, //記号
+    TK_NUM, //整数トークン
+    TK_EOF,       //入力の終わりを表すトークン
+} TokenKind;
 
 //トークンの型
 //type
@@ -21,15 +22,17 @@ enum{
 //トークンの文字列
 typedef struct {
   int ty;
-  int val;
-  char* input;//いるのか??
+  int val; //Kind = TK_NUMの時
+  char* str;//Tokenの文字列ここのrefactering途中
 } Token;
 
+//現在着目しているトークン(字数制限を解除)
+Token* token;
 //トークナイズした結果のトークン列はこの配列に保存する
 //100個以上のトークンは来ないものとする。
-Token tokens[100];
+//Token tokens[100];
 //トークン列のどこをみているのか
-int pos = 0;
+//int pos = 0;
 
 //ノードの型を表す値
 enum{
@@ -53,6 +56,8 @@ int consume(int ty);
 Node* term();
 Node* mul();
 Node* expr();
+Node* unary();
+Node* primary();
 void gen(Node* node);
 
 //エラーを報告するための関数
@@ -113,7 +118,7 @@ void tokenize(){
 
 
 Node* new_node(int ty, Node* lhs, Node *rhs){
-  Node *node = malloc(sizeof(Node));
+  Node *node = calloc(sizeof(Node));
   node->ty = ty;
   node->lhs = lhs;
   node->rhs = rhs;
@@ -121,17 +126,23 @@ Node* new_node(int ty, Node* lhs, Node *rhs){
 }
 
 Node* new_node_num(int val){
-  Node* node = (Node*)malloc(sizeof(Node));
+  Node* node = (Node*)calloc(sizeof(Node));
   node->ty = ND_NUM;
   node->val = val;
   return node;
 }
 
-int consume(int ty){
-  if(tokens[pos].ty != ty) return 0;
-  pos++;
-  return 1;
+int consume(char op) {
+    if (token->kind != TK_RESERVED || token->str[0] != op)
+        return false;
+    token = token->next;
+    return true;
 }
+//int consume(int ty){
+//  if(tokens[pos].ty != ty) return 0;
+//  pos++;
+//  return 1;
+//}
 
 Node* term(){
   if(consume('(')){
@@ -165,6 +176,14 @@ Node* expr(){
     else if(consume('-')) node = new_node('-',node,mul());
     else return node;
   }
+}
+Node* unary() {
+    if (consume('+'))
+        return primary();
+
+}
+Node* primary() {
+
 }
 
 //ASTをアセンブリにしましょう
